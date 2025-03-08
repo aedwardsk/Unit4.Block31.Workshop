@@ -30,9 +30,9 @@ app.get("/", (req, res) => {
 /* set up api route */
 app.get("/api/employees", async (req, res) => {
   try {
-    const SQL = `SELECT * FROM employees;`;
+    const SQL = /*sql*/ `SELECT * FROM employees;`;
     const response = await client.query(SQL);
-    res.json(response.rows); // Send the employee data as JSON response
+    res.json(response.rows);
   } catch (error) {
     console.error(error);
     res.status(500).send("Internal Server Error");
@@ -45,7 +45,37 @@ app.use((req, res, next) => {
 });
 app.use(errorHandler); // Correctly use the error handler middleware
 
-/* initialize server (listen) */
-app.listen(PORT, () => {
-  console.log(`Server is listening on ${PORT}`);
-});
+// create your init function
+const init = async () => {
+  try {
+    await client.connect();
+    const SQL = /*sql*/ `
+      DROP TABLE IF EXISTS employees;
+      CREATE TABLE employees (
+        id SERIAL PRIMARY KEY,
+        name VARCHAR(100),
+        phone VARCHAR(255),
+        isAdmin BOOLEAN
+      );
+      INSERT INTO employees (name, phone, isAdmin) VALUES
+      ('Albert Mills', '(946) 529-4164', false),
+      ('Jose Stamm', '1-405-787-8749 x4311', false),
+      ('Ms. Allison Lehner', '996.680.3262 x467', false),
+      ('Jessie Dibbert', '(204) 816-2524 x53873', false),
+      ('Miss Maria Kiehn', '(206) 990-1990 x8370', false),
+      ('Geraldine King DDS', '337.218.2322 x6035', false),
+      ('Jaime Murazik', '(820) 544-8026 x284', true),
+      ('Brian Monahan', '(839) 289-4790 x338', false),
+      ('Vivian Reinger', '297.696.9011 x342', true),
+      ('Elbert Kiehn', '(339) 543-5497 x24059', false);
+    `;
+    await client.query(SQL);
+    console.log("data seeded");
+    app.listen(PORT, () => console.log(`Server is listening on port ${PORT}`));
+  } catch (error) {
+    console.error("Error during initialization:", error);
+  }
+};
+
+// init function invocation
+init();
